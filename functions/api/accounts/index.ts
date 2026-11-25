@@ -188,13 +188,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .run()
   }
 
-  if (input.incomingLabelName) {
+  const incomingLabelName = input.incomingLabelName || (context.env.OPENGOVAL_IMAP_LOGIN ? input.email : undefined)
+  if (incomingLabelName) {
     try {
-      const labelId = await ensureGlobalLabel(context.env, input.incomingLabelName)
+      const labelId = await ensureGlobalLabel(context.env, incomingLabelName)
       await context.env.DB.prepare('UPDATE accounts SET incoming_label_id = ? WHERE id = ?')
         .bind(labelId, id)
         .run()
-      await syncAccountLabelFilter(context.env, id, labelId, input.incomingLabelName.trim())
+      await syncAccountLabelFilter(context.env, id, labelId, incomingLabelName.trim())
       await backfillAccountLabel(context.env, id, labelId)
     } catch (error) {
       if (!isSchemaError(error)) {

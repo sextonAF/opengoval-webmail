@@ -51,7 +51,7 @@ export async function handleRequest(
 
     // An insecure APP_PASSWORD must not serve the application at all: the Node
     // entry refuses to start, this is the same policy for Workers.
-    const blocked = passwordGuard(env, url.pathname)
+    const blocked = runtime.authenticationMode === 'imap' ? null : passwordGuard(env, url.pathname)
     if (blocked) {
       return withSecurityHeaders(blocked)
     }

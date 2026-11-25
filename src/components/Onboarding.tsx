@@ -200,9 +200,11 @@ export function Onboarding({ accounts, storage, health, busy, error, onCancel, o
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-4 py-10">
-      <div className="mb-4 flex w-full max-w-2xl justify-end">
-        <LocaleToggle />
-      </div>
+      {!( import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1' ) && (
+        <div className="mb-4 flex w-full max-w-2xl justify-end">
+          <LocaleToggle />
+        </div>
+      )}
       <div className="w-full max-w-2xl">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">

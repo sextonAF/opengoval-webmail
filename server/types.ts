@@ -2,6 +2,8 @@ import type { Env } from '../functions/_lib/env'
 
 /** Runtime hook supplied by each deployment entrypoint. */
 export interface AppRuntime {
+  /** Only the isolated IMAP Worker supplies this; all existing runtimes keep the password guard. */
+  authenticationMode?: 'imap'
   waitUntil(promise: Promise<unknown>): void
 }
 

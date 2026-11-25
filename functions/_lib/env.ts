@@ -1,5 +1,7 @@
 export interface Env {
   DB: D1Database
+  /** OpenGovAL accounts receive an address label by default. */
+  OPENGOVAL_IMAP_LOGIN?: boolean
   BUCKET?: R2Bucket
   APP_PASSWORD: string
   TOKEN_ENC_KEY: string

@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { opengovalLoginAddress } from '../../shared/opengoval-login'
 import { useI18n } from '../i18n'
 import { api } from '../lib/api'
 import { errorText } from '../lib/errors'
@@ -12,6 +13,8 @@ interface LoginProps {
 
 export function Login({ onSuccess }: LoginProps) {
   const { t } = useI18n()
+  const imapLogin = import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1'
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [challenge, setChallenge] = useState('')
@@ -19,21 +22,30 @@ export function Login({ onSuccess }: LoginProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function submitPassword(event: FormEvent) {
+  async function submitPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const fields = new FormData(event.currentTarget)
+    const address = imapLogin ? opengovalLoginAddress(fields.get('username')) : undefined
+    if (imapLogin && !address) {
+      setError('Enter a valid OpenGovAL username.')
+      return
+    }
+    const submittedPassword = String(fields.get('password') ?? password)
     setBusy(true)
     setError(null)
     try {
-      const result = await api.login(password)
+      const result = await api.login(submittedPassword, address ?? undefined)
       if (result.twoFactorRequired && result.challenge) {
         setChallenge(result.challenge)
         setStep('totp')
         setCode('')
       } else {
-        onSuccess()
+        setPassword('')
+        if (imapLogin) window.location.replace('/inbox')
+        else onSuccess()
       }
     } catch (err) {
-      setError(errorText(err, t))
+      setError(imapLogin && err instanceof Error && /invalid email address or password|invalid password/i.test(err.message) ? 'Invalid username or mailbox password.' : errorText(err, t))
     } finally {
       setBusy(false)
     }
@@ -55,31 +67,66 @@ export function Login({ onSuccess }: LoginProps) {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-4">
-      <div className="mb-4 flex w-full max-w-sm justify-end">
-        <LocaleToggle />
-      </div>
-      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <WhelkLogo size={24} />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold">{t('app.name')}</h1>
-            <p className="text-xs text-muted">
-              {step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
-            </p>
-          </div>
+      {!imapLogin && (
+        <div className="mb-4 flex w-full max-w-sm justify-end">
+          <LocaleToggle />
         </div>
+      )}
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
+        {imapLogin ? (
+          <picture className="mb-6 block overflow-hidden rounded-lg bg-black">
+            <source media="(prefers-reduced-motion: reduce)" srcSet="/opengoval-logo.png" />
+            <img src="/opengoval-logo.gif" alt="OpenGovAL" className="block h-auto w-full" />
+          </picture>
+        ) : (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">
+              <WhelkLogo size={24} />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">{t('app.name')}</h1>
+              <p className="text-xs text-muted">
+                {step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
+              </p>
+            </div>
+          </div>
+        )}
 
         {step === 'password' ? (
           <form onSubmit={submitPassword} className="space-y-4">
+            {imapLogin ? (
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-muted">Username</span>
+                <div className="flex items-center overflow-hidden rounded-lg border border-line focus-within:border-brand">
+                  <input
+                    type="text"
+                    name="username"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    aria-label="Username at opengoval.org"
+                    placeholder="username"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value.replace(/@opengoval\.org$/i, ''))}
+                    autoFocus
+                    required
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none"
+                  />
+                  <span className="shrink-0 border-l border-line bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    @opengoval.org
+                  </span>
+                </div>
+              </label>
+            ) : null}
             <label className="block text-sm">
               <span className="mb-1 block font-medium text-muted">{t('login.password')}</span>
               <input
                 type="password"
+                name="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                autoFocus
+                autoFocus={!imapLogin}
+                autoComplete="current-password"
                 required
                 className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
               />

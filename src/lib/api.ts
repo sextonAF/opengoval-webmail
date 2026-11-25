@@ -85,8 +85,8 @@ export interface AccountError {
 }
 
 export const api = {
-  login(password: string): Promise<LoginResult> {
-    return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ password }) })
+  login(password: string, email?: string): Promise<LoginResult> {
+    return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ password, email }) })
   },
   loginTwoFactor(challenge: string, code: string): Promise<{ ok: boolean }> {
     return request('/api/auth/2fa', {
