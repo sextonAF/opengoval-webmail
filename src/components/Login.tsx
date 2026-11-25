@@ -65,17 +65,24 @@ export function Login({ onSuccess }: LoginProps) {
         </div>
       )}
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <WhelkLogo size={24} />
+        {imapLogin ? (
+          <picture className="mb-6 block overflow-hidden rounded-lg bg-black">
+            <source media="(prefers-reduced-motion: reduce)" srcSet="/opengoval-logo.png" />
+            <img src="/opengoval-logo.gif" alt="OpenGovAL" className="block h-auto w-full" />
+          </picture>
+        ) : (
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">
+              <WhelkLogo size={24} />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">{t('app.name')}</h1>
+              <p className="text-xs text-muted">
+                {step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold">{imapLogin ? 'OpenGovAL Webmail' : t('app.name')}</h1>
-            <p className="text-xs text-muted">
-              {imapLogin ? 'Sign in with your email account' : step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
-            </p>
-          </div>
-        </div>
+        )}
 
         {step === 'password' ? (
           <form onSubmit={submitPassword} className="space-y-4">
