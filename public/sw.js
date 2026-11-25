@@ -1,4 +1,4 @@
-const CACHE = 'whelkmail-v3'
+const CACHE = 'whelkmail-v4'
 const SHELL = [
   '/',
   '/favicon.svg',
