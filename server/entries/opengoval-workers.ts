@@ -1,4 +1,5 @@
 import schema from '../../db/schema.sql'
+import { opengovalLoginAddress } from '../../shared/opengoval-login'
 import { APP_VERSION } from '../../shared/version'
 import { clearedSessionCookie, createSession, decryptString, encryptString, readCookie, sessionCookie, toBase64, verifySession } from '../../functions/_lib/crypto'
 import type { Env } from '../../functions/_lib/env'
@@ -85,7 +86,7 @@ async function credentials(request: Request): Promise<{ email: string; password:
     let offset = 0
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length }
     const body = JSON.parse(new TextDecoder().decode(bytes))
-    const email = normalizeLogin(body?.email)
+    const email = normalizeLogin(opengovalLoginAddress(body?.email ?? body?.username))
     return email && validPassword(body?.password) ? { email, password: body.password } : null
   } catch {
     return null
