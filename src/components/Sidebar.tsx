@@ -131,8 +131,18 @@ export function Sidebar({
         )}
       >
         <div className="mb-4 flex items-center gap-2 px-3">
-          <WhelkLogo size={24} className="text-brand" />
-          <span className="text-xl font-medium tracking-tight">{t('app.name')}</span>
+          {import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1' ? (
+            <img
+              src="/opengoval-logo.png"
+              alt="OpenGovAL"
+              className="block h-auto w-full min-w-0 max-w-[190px] rounded-md bg-black"
+            />
+          ) : (
+            <>
+              <WhelkLogo size={24} className="text-brand" />
+              <span className="text-xl font-medium tracking-tight">{t('app.name')}</span>
+            </>
+          )}
           <button
             type="button"
             onClick={onClose}
