@@ -198,10 +198,10 @@ export class MailboxUser {
     ).all<{ id: string; email: string }>()
     for (const row of rows.results) {
       const labelId = await ensureGlobalLabel(env, row.email)
-      await env.DB.prepare('UPDATE accounts SET incoming_label_id = ? WHERE id = ? AND incoming_label_id IS NULL')
-        .bind(labelId, row.id).run()
       await syncAccountLabelFilter(env, row.id, labelId, row.email)
       await backfillAccountLabel(env, row.id, labelId)
+      await env.DB.prepare('UPDATE accounts SET incoming_label_id = ? WHERE id = ? AND incoming_label_id IS NULL')
+        .bind(labelId, row.id).run()
     }
     await this.state.storage.put(marker, true)
   }
