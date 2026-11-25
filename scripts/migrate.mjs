@@ -20,7 +20,7 @@
  */
 import { spawnSync } from 'node:child_process'
 import { readdirSync, readFileSync } from 'node:fs'
-import { describeRequirement, requirementsFromSql } from './migration-requirements.mjs'
+import { describeRequirement, requirementsFromSql, supersededBaselineRequirement } from './migration-requirements.mjs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -217,7 +217,18 @@ if (markApplied) {
       console.error(`\n[db] cannot verify ${file}: ${check.error}`)
       process.exit(1)
     }
-    absent.push(...check.missing.map((item) => ({ file, ...item })))
+    let missing = check.missing
+
+    if (file === '009_forward_and_delete.sql') {
+      const replacement = missingRequirements('011_filter_forwarding.sql')
+      if (!replacement.error && replacement.missing.length === 0) {
+        missing = missing.filter(
+          (item) => !supersededBaselineRequirement(file, item),
+        )
+      }
+    }
+
+    absent.push(...missing.map((item) => ({ file, ...item })))
   }
   if (absent.length > 0) {
     console.error(

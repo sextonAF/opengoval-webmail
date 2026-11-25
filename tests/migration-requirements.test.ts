@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   describeRequirement,
   requirementsFromSql,
+  supersededBaselineRequirement,
 } from '../scripts/migration-requirements.mjs'
 
 describe('migration requirements', () => {
@@ -74,5 +75,33 @@ describe('migration requirements', () => {
     expect(describeRequirement({ kind: 'index', name: 'idx_email', unique: true })).toBe(
       'index idx_email (unique)',
     )
+  })
+})
+
+describe('superseded baseline requirements', () => {
+  it('recognises obsolete forwarding objects from migration 009', () => {
+    const file = '009_forward_and_delete.sql'
+    expect(supersededBaselineRequirement(
+      file, { kind: 'table', name: 'forward_rules' }
+    )).toBe(true)
+    for (const name of ['idx_forward_rules_account', 'idx_forward_log_rule']) {
+      expect(supersededBaselineRequirement(
+        file, { kind: 'index', name }
+      )).toBe(true)
+    }
+  })
+
+  it('preserves active forwarding and deletion requirements', () => {
+    const file = '009_forward_and_delete.sql'
+    expect(supersededBaselineRequirement(
+      file, { kind: 'table', name: 'forward_log' }
+    )).toBe(false)
+    expect(supersededBaselineRequirement(
+      file, { kind: 'table', name: 'deletion_log' }
+    )).toBe(false)
+    expect(supersededBaselineRequirement(
+      '011_filter_forwarding.sql',
+      { kind: 'index', name: 'idx_forward_log_filter' }
+    )).toBe(false)
   })
 })

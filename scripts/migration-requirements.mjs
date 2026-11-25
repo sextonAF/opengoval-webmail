@@ -41,3 +41,16 @@ export function describeRequirement(item) {
   const suffix = item.unique ? ' (unique)' : ''
   return `${kind} ${prefix}${item.name}${suffix}`
 }
+
+/**
+ * Migration 011 replaces the forwarding objects created by 009.
+ * These three objects must not be required in a current schema.
+ */
+export function supersededBaselineRequirement(file, item) {
+  if (file !== '009_forward_and_delete.sql') return false
+  return (
+    (item.kind === 'table' && item.name === 'forward_rules') ||
+    (item.kind === 'index' &&
+      ['idx_forward_rules_account', 'idx_forward_log_rule'].includes(item.name))
+  )
+}
