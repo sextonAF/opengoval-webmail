@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { opengovalLoginAddress } from '../../shared/opengoval-login'
 import { useI18n } from '../i18n'
 import { api } from '../lib/api'
 import { errorText } from '../lib/errors'
@@ -21,12 +22,19 @@ export function Login({ onSuccess }: LoginProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function submitPassword(event: FormEvent) {
+  async function submitPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const fields = new FormData(event.currentTarget)
+    const address = imapLogin ? opengovalLoginAddress(fields.get('username')) : undefined
+    if (imapLogin && !address) {
+      setError('Enter a valid OpenGovAL username.')
+      return
+    }
+    const submittedPassword = String(fields.get('password') ?? password)
     setBusy(true)
     setError(null)
     try {
-      const result = await api.login(password, imapLogin ? `${email.trim()}@opengoval.org` : undefined)
+      const result = await api.login(submittedPassword, address ?? undefined)
       if (result.twoFactorRequired && result.challenge) {
         setChallenge(result.challenge)
         setStep('totp')
@@ -37,7 +45,7 @@ export function Login({ onSuccess }: LoginProps) {
         else onSuccess()
       }
     } catch (err) {
-      setError(errorText(err, t))
+      setError(imapLogin && err instanceof Error && /invalid email address or password|invalid password/i.test(err.message) ? 'Invalid username or mailbox password.' : errorText(err, t))
     } finally {
       setBusy(false)
     }
@@ -114,6 +122,7 @@ export function Login({ onSuccess }: LoginProps) {
               <span className="mb-1 block font-medium text-muted">{t('login.password')}</span>
               <input
                 type="password"
+                name="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoFocus={!imapLogin}
