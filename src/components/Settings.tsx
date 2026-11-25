@@ -1263,6 +1263,7 @@ export function Settings({
 
         {tab === 'general' ? (
           <>
+            {!(import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1') && (
             <div className="rounded-2xl border border-line bg-white p-5">
               <label className="flex items-center justify-between gap-3 text-xs">
                 <span className="font-medium text-slate-700">{t('settings.language')}</span>
@@ -1279,6 +1280,7 @@ export function Settings({
                 </select>
               </label>
             </div>
+            )}
 
             <div className="mt-3 rounded-2xl border border-line bg-white p-5">
               <p className="text-sm font-medium">{t('settings.contactAutoAddTitle')}</p>
