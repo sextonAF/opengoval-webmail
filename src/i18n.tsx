@@ -1538,6 +1538,7 @@ const I18nContext = createContext<I18nValue | null>(null)
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {
+    if (import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1') return 'en'
     try {
       return (localStorage.getItem('whelkmail_locale') ?? localStorage.getItem('mc_locale')) ===
         'it'
@@ -1549,6 +1550,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   })
 
   const setLocale = useCallback((next: Locale) => {
+    if (import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1') return
     setLocaleState(next)
     try {
       localStorage.setItem('whelkmail_locale', next)
