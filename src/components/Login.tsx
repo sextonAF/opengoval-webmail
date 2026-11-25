@@ -26,7 +26,7 @@ export function Login({ onSuccess }: LoginProps) {
     setBusy(true)
     setError(null)
     try {
-      const result = await api.login(password, imapLogin ? email : undefined)
+      const result = await api.login(password, imapLogin ? `${email.trim()}@opengoval.org` : undefined)
       if (result.twoFactorRequired && result.challenge) {
         setChallenge(result.challenge)
         setStep('totp')
@@ -59,9 +59,11 @@ export function Login({ onSuccess }: LoginProps) {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-4">
-      <div className="mb-4 flex w-full max-w-sm justify-end">
-        <LocaleToggle />
-      </div>
+      {!imapLogin && (
+        <div className="mb-4 flex w-full max-w-sm justify-end">
+          <LocaleToggle />
+        </div>
+      )}
       <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-brand">
@@ -79,18 +81,26 @@ export function Login({ onSuccess }: LoginProps) {
           <form onSubmit={submitPassword} className="space-y-4">
             {imapLogin ? (
               <label className="block text-sm">
-                <span className="mb-1 block font-medium text-muted">Email address</span>
-                <input
-                  type="email"
-                  name="username"
-                  autoComplete="username"
-                  placeholder="user@opengoval.org"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  autoFocus
-                  required
-                  className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
-                />
+                <span className="mb-1 block font-medium text-muted">Username</span>
+                <div className="flex items-center overflow-hidden rounded-lg border border-line focus-within:border-brand">
+                  <input
+                    type="text"
+                    name="username"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    aria-label="Username at opengoval.org"
+                    placeholder="username"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value.replace(/@opengoval\.org$/i, ''))}
+                    autoFocus
+                    required
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none"
+                  />
+                  <span className="shrink-0 border-l border-line bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                    @opengoval.org
+                  </span>
+                </div>
               </label>
             ) : null}
             <label className="block text-sm">
