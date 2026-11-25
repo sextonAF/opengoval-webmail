@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { opengovalLoginAddress } from '../shared/opengoval-login'
 import { toBase64 } from '../functions/_lib/crypto'
 import { mailboxKey, normalizeLogin, openSession, primaryPatchAllowed, sealSession, validPassword } from '../server/opengoval/identity'
 
@@ -13,6 +14,13 @@ describe('OpenGovAL IMAP identity boundary', () => {
     expect(normalizeLogin(' Admin@OpenGovAL.org ')).toBe('admin@opengoval.org')
     for (const bad of ['admin@gmail.com', 'admin@opengoval.org.evil.test', 'admin@evil.test', 'admin', '@opengoval.org', 'a\n@opengoval.org', null]) {
       expect(normalizeLogin(bad)).toBeNull()
+    }
+  })
+  it('completes the login suffix exactly once and rejects foreign domains', () => {
+    expect(opengovalLoginAddress('sexton')).toBe('sexton@opengoval.org')
+    expect(opengovalLoginAddress(' Sexton@OpenGovAL.org ')).toBe('sexton@opengoval.org')
+    for (const bad of ['', 'sexton@other.org', 'sexton@opengoval.org@opengoval.org', null]) {
+      expect(opengovalLoginAddress(bad)).toBeNull()
     }
   })
   it('accepts existing provider passwords without imposing an application password policy', () => {
