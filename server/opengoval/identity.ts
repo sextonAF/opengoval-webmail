@@ -49,7 +49,7 @@ export async function mailboxKey(key: string, objectId: string): Promise<Uint8Ar
 }
 
 /** Primary credentials must never be changed via an account edit or import. */
-export function primaryPatchAllowed(body: unknown): boolean {
+export function primaryPatchAllowed(body: unknown, email?: string): boolean {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return false
   const safe = new Set([
     'displayName', 'signature', 'signatureHtml', 'incomingLabelId',
@@ -57,11 +57,11 @@ export function primaryPatchAllowed(body: unknown): boolean {
     'autoReplyBody', 'autoReplyBodyHtml', 'sentFolder', 'autoSavesSent', 'replyAccountId',
   ])
   const fixed: Record<string, unknown> = {
-    username: undefined, imapHost: MAIL_HOST, smtpHost: MAIL_HOST,
+    username: email, imapHost: MAIL_HOST, smtpHost: MAIL_HOST,
     imapPort: 993, smtpPort: 465, imapSecurity: 'tls', smtpSecurity: 'tls',
     archiveImapBodies: false, deleteAfterArchive: false,
     storageDriver: 'provider', imapArchiveDriver: 'r2',
   }
   return Object.entries(body).every(([key, value]) =>
-    safe.has(key) || (key !== 'username' && Object.hasOwn(fixed, key) && fixed[key] === value))
+    safe.has(key) || (Object.hasOwn(fixed, key) && fixed[key] === value))
 }
