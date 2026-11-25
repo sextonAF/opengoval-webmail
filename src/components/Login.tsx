@@ -12,6 +12,8 @@ interface LoginProps {
 
 export function Login({ onSuccess }: LoginProps) {
   const { t } = useI18n()
+  const imapLogin = import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1'
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [code, setCode] = useState('')
   const [challenge, setChallenge] = useState('')
@@ -24,13 +26,15 @@ export function Login({ onSuccess }: LoginProps) {
     setBusy(true)
     setError(null)
     try {
-      const result = await api.login(password)
+      const result = await api.login(password, imapLogin ? email : undefined)
       if (result.twoFactorRequired && result.challenge) {
         setChallenge(result.challenge)
         setStep('totp')
         setCode('')
       } else {
-        onSuccess()
+        setPassword('')
+        if (imapLogin) window.location.replace('/inbox')
+        else onSuccess()
       }
     } catch (err) {
       setError(errorText(err, t))
@@ -64,22 +68,39 @@ export function Login({ onSuccess }: LoginProps) {
             <WhelkLogo size={24} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">{t('app.name')}</h1>
+            <h1 className="text-lg font-semibold">{imapLogin ? 'OpenGovAL Webmail' : t('app.name')}</h1>
             <p className="text-xs text-muted">
-              {step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
+              {imapLogin ? 'Sign in with your email account' : step === 'totp' ? t('login.twoFactorTitle') : t('login.subtitle')}
             </p>
           </div>
         </div>
 
         {step === 'password' ? (
           <form onSubmit={submitPassword} className="space-y-4">
+            {imapLogin ? (
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium text-muted">Email address</span>
+                <input
+                  type="email"
+                  name="username"
+                  autoComplete="username"
+                  placeholder="user@opengoval.org"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoFocus
+                  required
+                  className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
+                />
+              </label>
+            ) : null}
             <label className="block text-sm">
               <span className="mb-1 block font-medium text-muted">{t('login.password')}</span>
               <input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                autoFocus
+                autoFocus={!imapLogin}
+                autoComplete="current-password"
                 required
                 className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
               />
