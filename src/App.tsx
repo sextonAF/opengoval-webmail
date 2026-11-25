@@ -1211,7 +1211,7 @@ export default function App() {
     try {
       const response = await api.createAccount(input)
       setAccounts((current) => [...current, response.account])
-      setSelectedAccountId(response.account.id)
+      setSelectedAccountId('all')
       setSelectedLabelId(null)
       setAddingAccount(false)
       setView('mail')
@@ -1557,6 +1557,11 @@ export default function App() {
     try {
       await api.logout()
     } finally {
+      setSelectedAccountId('all')
+      setSelectedLabelId(null)
+      setFolder('inbox')
+      setView('mail')
+      setQuery('')
       setAccounts([])
       setMessages([])
       setDetail(null)
@@ -1568,6 +1573,9 @@ export default function App() {
   }
 
   function openFolder(next: Folder) {
+    if (next === 'inbox') {
+      setSelectedAccountId('all')
+    }
     setListLoaded(false)
     setMessages([])
     setFolder(next)
