@@ -3,6 +3,7 @@ import { cn } from '../lib/utils'
 
 export function LocaleToggle({ className }: { className?: string }) {
   const { locale, setLocale } = useI18n()
+  if (import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1') return null
   return (
     <div className={cn('flex items-center gap-1 rounded-lg border border-line bg-white p-0.5', className)}>
       {LOCALES.map((item) => (
