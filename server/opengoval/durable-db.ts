@@ -35,7 +35,7 @@ class Statement {
     const changes = cursor.rowsWritten > 0
       ? Number(this.storage.sql.exec('SELECT changes() AS n').one().n)
       : 0
-    return { results, success: true as const, meta: { changes, last_row_id: 0 } }
+    return { results, success: true as const, meta: { changes, last_row_id: changes ? Number(this.storage.sql.exec('SELECT last_insert_rowid() AS n').one().n) : 0 } }
   }
   async first<T = Record<string, unknown>>(column?: string): Promise<T | null> {
     const row = this.execute<Record<string, unknown>>().results[0]
@@ -46,7 +46,7 @@ class Statement {
   async raw<T = unknown[]>(options?: { columnNames?: boolean }): Promise<T[]> {
     const cursor = this.storage.sql.exec(this.query, ...this.values)
     const rows = [...cursor.raw()] as T[]
-    return options?.columnNames ? [cursor.columnNames as T, ...rows] : rows
+    return options?.columnNames ? [cursor.columnNames as unknown as T, ...rows] : rows
   }
 }
 
