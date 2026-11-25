@@ -266,7 +266,7 @@ export class MailboxUser {
       if (request.method === 'DELETE') return fail('The primary mailbox is managed by the mail server', 403)
       if (request.method === 'PATCH' || request.method === 'PUT') {
         const patch = await request.clone().json().catch(() => null)
-        if (!primaryPatchAllowed(patch)) return fail('Primary mailbox connection settings are managed by the mail server', 403)
+        if (!primaryPatchAllowed(patch, this.identity()?.email)) return fail('Primary mailbox connection settings are managed by the mail server', 403)
       }
     }
     if (path === '/api/accounts' && request.method === 'POST') {
