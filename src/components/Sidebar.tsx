@@ -159,7 +159,7 @@ export function Sidebar({
             onCompose()
             onClose()
           }}
-          className="mb-4 flex w-fit items-center gap-3 rounded-2xl bg-brand-soft px-5 py-3 text-sm font-medium text-brand-strong shadow-sm transition hover:bg-red-100"
+          className="mb-4 flex w-fit items-center gap-3 rounded-2xl bg-brand-soft px-5 py-3 text-sm font-medium text-brand-strong shadow-sm transition hover:bg-brand/20"
         >
           <Pencil size={18} />
           {t('sidebar.compose')}
