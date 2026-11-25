@@ -2,6 +2,8 @@ import schema from '../../db/schema.sql'
 import { APP_VERSION } from '../../shared/version'
 import { clearedSessionCookie, createSession, decryptString, encryptString, readCookie, sessionCookie, toBase64, verifySession } from '../../functions/_lib/crypto'
 import type { Env } from '../../functions/_lib/env'
+import { ensureGlobalLabel } from '../../functions/_lib/labels'
+import { syncAccountLabelFilter, backfillAccountLabel } from '../../functions/_lib/filters'
 import { fail, json } from '../../functions/_lib/http'
 import { ImapConnection } from '../../functions/_lib/imap/client'
 import { runScheduledTasks } from '../../functions/api/cron/notifications'
@@ -151,6 +153,7 @@ export class MailboxUser {
     // integrations need their own tenant-scoped authorization before enabling.
     return {
       DB: new DurableDatabase(this.state.storage).asD1(),
+      OPENGOVAL_IMAP_LOGIN: true,
       TOKEN_ENC_KEY: key,
       APP_PASSWORD: '',
       GOOGLE_CLIENT_ID: '',
@@ -183,6 +186,24 @@ export class MailboxUser {
 
   private identity(): Identity | null {
     return this.state.storage.sql.exec('SELECT email, account_id, secret_enc, verified_at FROM opengoval_identity WHERE singleton = 1').toArray()[0] as unknown as Identity ?? null
+  }
+
+  /** Restore default labels once in each existing private user database.
+   * Preserve previously selected labels and later intentional changes. */
+  private async provisionAccountLabels(env: Env): Promise<void> {
+    const marker = 'default-account-labels-v1'
+    if (await this.state.storage.get<boolean>(marker)) return
+    const rows = await env.DB.prepare(
+      'SELECT id, email FROM accounts WHERE incoming_label_id IS NULL'
+    ).all<{ id: string; email: string }>()
+    for (const row of rows.results) {
+      const labelId = await ensureGlobalLabel(env, row.email)
+      await env.DB.prepare('UPDATE accounts SET incoming_label_id = ? WHERE id = ? AND incoming_label_id IS NULL')
+        .bind(labelId, row.id).run()
+      await syncAccountLabelFilter(env, row.id, labelId, row.email)
+      await backfillAccountLabel(env, row.id, labelId)
+    }
+    await this.state.storage.put(marker, true)
   }
 
   private async login(request: Request): Promise<Response> {
@@ -220,6 +241,7 @@ export class MailboxUser {
         secret_enc=excluded.secret_enc, verified_at=excluded.verified_at`,
         email, id, encrypted, Date.now()).toArray()
     })
+    await this.provisionAccountLabels(env)
     const token = await createSession(env, request)
     await this.state.storage.setAlarm(Date.now() + REVALIDATE_MS)
     // Internal response only. The public Worker consumes the token and
@@ -257,8 +279,13 @@ export class MailboxUser {
     if (version !== SCHEMA_VERSION) return unauthorized()
     const env = await this.envPromise
     const token = readCookie(request, SESSION_COOKIE)
-    const allowed = await this.serial(async () =>
-      await verifySession(env, token) && (path === LOGOUT || await this.revalidate(env)))
+    const allowed = await this.serial(async () => {
+      if (!(await verifySession(env, token))) return false
+      if (path === LOGOUT) return true
+      if (!(await this.revalidate(env))) return false
+      await this.provisionAccountLabels(env)
+      return true
+    })
     if (!allowed) return unauthorized()
 
     const route = matchRoute(new URL(request.url).pathname)
