@@ -10,6 +10,12 @@
   --color-line: #e5e7eb;
 }
 
+:root[data-opengoval='true'] {
+  --color-brand: #1d4ed8;
+  --color-brand-strong: #1e40af;
+  --color-brand-soft: #dbeafe;
+}
+
 html,
 body,
 #root {
