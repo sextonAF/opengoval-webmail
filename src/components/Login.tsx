@@ -66,13 +66,13 @@ export function Login({ onSuccess }: LoginProps) {
   }
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center px-4">
+    <div className={`flex min-h-full flex-col items-center justify-center px-4${imapLogin ? ' bg-[#6f6f6c]' : ''}`}>
       {!imapLogin && (
         <div className="mb-4 flex w-full max-w-sm justify-end">
           <LocaleToggle />
         </div>
       )}
-      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-8 shadow-sm">
+      <div className={`w-full max-w-sm rounded-2xl border p-8 ${imapLogin ? 'border-black bg-black text-white shadow-xl' : 'border-line bg-white shadow-sm'}`}>
         {imapLogin ? (
           <picture className="mb-6 block overflow-hidden rounded-lg bg-black">
             <source media="(prefers-reduced-motion: reduce)" srcSet="/opengoval-logo.png" />
@@ -96,8 +96,8 @@ export function Login({ onSuccess }: LoginProps) {
           <form onSubmit={submitPassword} className="space-y-4">
             {imapLogin ? (
               <label className="block text-sm">
-                <span className="mb-1 block font-medium text-muted">Username</span>
-                <div className="flex items-center overflow-hidden rounded-lg border border-line focus-within:border-brand">
+                <span className="mb-1 block font-medium text-neutral-200">Username</span>
+                <div className="flex items-center overflow-hidden rounded-lg border border-neutral-500 bg-neutral-900 focus-within:border-brand">
                   <input
                     type="text"
                     name="username"
@@ -110,16 +110,16 @@ export function Login({ onSuccess }: LoginProps) {
                     onChange={(event) => setEmail(event.target.value.replace(/@opengoval\.org$/i, ''))}
                     autoFocus
                     required
-                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-white outline-none placeholder:text-neutral-400"
                   />
-                  <span className="shrink-0 border-l border-line bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  <span className="shrink-0 border-l border-neutral-500 bg-neutral-800 px-3 py-2 text-sm text-neutral-200">
                     @opengoval.org
                   </span>
                 </div>
               </label>
             ) : null}
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-muted">{t('login.password')}</span>
+              <span className={`mb-1 block font-medium ${imapLogin ? 'text-neutral-200' : 'text-muted'}`}>{t('login.password')}</span>
               <input
                 type="password"
                 name="password"
@@ -128,10 +128,10 @@ export function Login({ onSuccess }: LoginProps) {
                 autoFocus={!imapLogin}
                 autoComplete="current-password"
                 required
-                className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-brand"
+                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-brand ${imapLogin ? 'border-neutral-500 bg-neutral-900 text-white placeholder:text-neutral-400' : 'border-line'}`}
               />
             </label>
-            {error ? <p className="text-sm text-brand-strong">{error}</p> : null}
+            {error ? <p role="alert" className={`text-sm ${imapLogin ? 'text-red-300' : 'text-brand-strong'}`}>{error}</p> : null}
             <button
               type="submit"
               disabled={busy}
