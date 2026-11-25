@@ -1556,6 +1556,7 @@ export default function App() {
   async function logout() {
     try {
       await api.logout()
+      if (import.meta.env.VITE_OPENGOVAL_IMAP_LOGIN === '1') window.location.replace('/inbox')
     } finally {
       setSelectedAccountId('all')
       setSelectedLabelId(null)
